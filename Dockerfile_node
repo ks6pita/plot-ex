@@ -1,0 +1,16 @@
+# Dockerfile for Vue.js
+
+FROM node:20.14.0
+
+WORKDIR /usr/src/app
+
+COPY package.json /usr/src/app/package.json
+
+RUN npm set progress=false && npm config set yes true
+
+RUN npm install && \
+    npm install -g @vue/cli && \
+    npm install axios
+    # npm install plotly.js-dist-min
+
+COPY ./ /usr/src/app

@@ -1,0 +1,6 @@
+# Ignore the virtual environment directory
+venv/
+
+# Ignore the node_modules directory inside frontend
+frontend/node_modules/
+
