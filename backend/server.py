@@ -28,9 +28,9 @@ def describing(df):
     dtypes_df.columns = ['ColumnName', 'Type']
     dtypes_df['Type'] = dtypes_df['Type'].astype(str)
     final_df = pd.merge(merged_df, dtypes_df, on='ColumnName', how='left')
-    column_order = ['ColumnName', 'Type', 'count', 'MissVal', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'unique', 'top', 'freq']
+    column_order = ['ColumnName', 'Type', 'count', 'Miss', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'unique', 'top', 'freq']
     final_df = final_df.reindex(columns=column_order)
-    final_df.columns = ['ColumnName', 'Type', 'Rows', 'MissVal', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'unique', 'top', 'freq']
+    final_df.columns = ['ColumnName', 'Type', 'Rows', 'Miss', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'unique', 'top', 'freq']
     return final_df
 
 @app.route("/")
