@@ -7,6 +7,10 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    DataTable: typeof import('./src/components/DataTable.vue')['default']
+    DescribedTable: typeof import('./src/components/DescribedTable.vue')['default']
+    FileUpload: typeof import('./src/components/FileUpload.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
+    ScatterPlot: typeof import('./src/components/ScatterPlot.vue')['default']
   }
 }

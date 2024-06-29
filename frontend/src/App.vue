@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from "axios";
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, watch } from "vue";
 import Plotly from "plotly.js-dist-min";
 
 // APIエンドポイントの設定
@@ -37,7 +37,6 @@ const plotSettings = reactive({
   color: '',
   facet_col: '',
   facet_row: '',
-  symbol: '',
   size: 6,
   opacity: 0.8,
   colorPalette: ''
@@ -72,14 +71,26 @@ const handleUpload = async () => {
 };
 
 // NA値を削除する処理
-const handleRemoveNA = async () => {
+const handleRemoveNA = async (columns: string[]) => {
   try {
     error.value = null; // エラーメッセージをクリア
-    const response = await axios.post(endpoint + "/remove_na"); // サーバーにNA値削除をリクエスト
+    const response = await axios.post(endpoint + "/remove_na", { columns }); // サーバーにNA値削除をリクエスト
     updateTableState(response.data); // レスポンスデータでテーブルの状態を更新
   } catch (error) {
     console.error("Remove NA error:", error);
     error.value = "Error removing NA values"; // エラーメッセージを設定
+  }
+};
+
+// 指定した値の範囲でフィルタリングする処理
+const handleFilterByValue = async (column: string, values: any[]) => {
+  try {
+    error.value = null; // エラーメッセージをクリア
+    const response = await axios.post(endpoint + "/filter_by_value", { column, values }); // サーバーにフィルタをリクエスト
+    updateTableState(response.data); // レスポンスデータでテーブルの状態を更新
+  } catch (error) {
+    console.error("Filter by value error:", error);
+    error.value = "Error filtering by value"; // エラーメッセージを設定
   }
 };
 
@@ -111,7 +122,6 @@ const resetPlotSettings = () => {
   plotSettings.color = '';
   plotSettings.facet_col = '';
   plotSettings.facet_row = '';
-  plotSettings.symbol = '';
   plotSettings.size = 6;
   plotSettings.opacity = 0.8;
   plotSettings.colorPalette = '';
@@ -144,40 +154,90 @@ const getNonNumericColumns = computed(() => {
 
 // 選択されたパラメータに応じてドロップダウンの背景色を変更する関数
 const dropdownStyle = (selected: string) => {
-  if (selected) {
-    if (selected === 'Default') {
-      return { backgroundColor: 'white' };
-    }
-    return { backgroundColor: 'lightblue' };
-  }
-  return { backgroundColor: 'white' };
+  return selected ? { backgroundColor: 'lightblue', color: '#4d4d4d' } : { backgroundColor: 'white', color: '#4d4d4d' };
 };
 
 // カラーパレットの選択肢
 const colorPalettes = ['Default', 'jet', 'RdBu', 'RdBu_r', 'Blues', 'Reds', 'Greens'];
 
+// カラムのユニーク値または数値範囲を取得する関数
+const columnValues = ref<any[]>([]);
+const selectedRemoveNAColumn = ref<string | null>(null);
+const selectedFilterColumn = ref<string | null>(null);
+const selectedFilterValues = ref<any[]>([]);
+
+watch(selectedFilterColumn, async (newColumn) => {
+  if (newColumn) {
+    try {
+      const response = await axios.post(endpoint + "/get_column_values", { column: newColumn });
+      columnValues.value = response.data.values;
+      selectedFilterValues.value = [];
+    } catch (error) {
+      console.error("Error fetching column values:", error);
+      error.value = "Error fetching column values"; // エラーメッセージを設定
+    }
+  } else {
+    columnValues.value = [];
+  }
+});
 </script>
 
 <template>
   <div class="container">
-    <div class="controls">
-      <!-- ファイル選択用のインプット -->
-      <input type="file" @change="handleFileChange" />
-      <!-- CSVファイルアップロードボタン -->
-      <button type="button" @click="handleUpload">Upload CSV</button>
-      <!-- NA値削除ボタン -->
-      <button type="button" @click="handleRemoveNA">Remove NA</button>
-    </div>
-    
+    <!-- ヘッダーエリア -->
+    <header class="header">
+      <div class="header-left">
+        <input type="file" @change="handleFileChange" />
+        <button type="button" @click="handleUpload">Upload CSV</button>
+        <div v-if="tableState.data.length > 0 && tableState.headers.length > 0" class="table-info">
+          <p>Columns: {{ tableState.headers.length }}, Rows: {{ tableState.data.length }}</p>
+        </div>
+      </div>
+    </header>
+
     <!-- エラーメッセージの表示 -->
     <p v-if="error" style="color: red;">{{ error }}</p>
-    
+
     <!-- データ表示とプロットエリア -->
     <div class="split-view">
       <div class="left-view">
-        <!-- オリジナルデータテーブルの情報表示 -->
-        <div v-if="tableState.data.length > 0 && tableState.headers.length > 0" class="table-info">
-          <p>Columns: {{ tableState.headers.length }}, Rows: {{ tableState.data.length }}</p>
+        <!-- 前処理エリア -->
+        <div class="preprocessing-controls">
+          <h3>Data Preprocessing</h3>
+          <div>
+            <label>
+              Remove NAs from:
+              <select v-model="selectedRemoveNAColumn" :style="dropdownStyle(selectedRemoveNAColumn)">
+                <option value="">All Columns</option>
+                <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
+              </select>
+            </label>
+            <button type="button" @click="handleRemoveNA(selectedRemoveNAColumn ? [selectedRemoveNAColumn] : [])">Remove NA</button>
+          </div>
+          <div>
+            <label>
+              Filter by value:
+              <select v-model="selectedFilterColumn" :style="dropdownStyle(selectedFilterColumn)">
+                <option value="">Select Column</option>
+                <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
+              </select>
+            </label>
+            <div v-if="columnValues.length > 0">
+              <label v-if="typeof columnValues[0] === 'number'">
+                Range:
+                <input type="number" v-model.number="columnValues[0]" />
+                to
+                <input type="number" v-model.number="columnValues[1]" />
+              </label>
+              <label v-else>
+                Values:
+                <select multiple v-model="selectedFilterValues">
+                  <option v-for="value in columnValues" :key="value" :value="value">{{ value }}</option>
+                </select>
+              </label>
+              <button type="button" @click="handleFilterByValue(selectedFilterColumn, selectedFilterValues)">Filter</button>
+            </div>
+          </div>
         </div>
 
         <!-- オリジナルデータテーブルの表示 -->
@@ -249,13 +309,6 @@ const colorPalettes = ['Default', 'jet', 'RdBu', 'RdBu_r', 'Blues', 'Reds', 'Gre
               </select>
             </label>
             <label>
-              Symbol:
-              <select v-model="plotSettings.symbol" :style="dropdownStyle(plotSettings.symbol)">
-                <option value="">Select Symbol</option>
-                <option v-for="header in getNonNumericColumns" :key="header" :value="header">{{ header }}</option>
-              </select>
-            </label>
-            <label>
               Facet Column:
               <select v-model="plotSettings.facet_col" :style="dropdownStyle(plotSettings.facet_col)">
                 <option value="">Select Facet Column</option>
@@ -312,9 +365,23 @@ const colorPalettes = ['Default', 'jet', 'RdBu', 'RdBu_r', 'Blues', 'Reds', 'Gre
   padding: 20px;
 }
 
+/* ヘッダーエリアのスタイル */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+}
+
+/* ヘッダー左部分のスタイル */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* コントロールエリアのスタイル */
 .controls {
-  margin-bottom: 20px;
   display: flex;
   gap: 10px;
 }
@@ -340,8 +407,8 @@ input[type="file"] {
 
 /* テーブル情報のスタイル */
 .table-info {
-  margin-bottom: 10px;
   font-size: 14px;
+  text-align: left;
 }
 
 /* テーブルコンテナのスタイル */
@@ -382,6 +449,7 @@ tr:nth-child(even) {
   word-wrap: break-word;
 }
 
+/* プロット設定のスタイル */
 .plot-settings {
   margin-bottom: 20px;
   display: flex;
@@ -400,7 +468,7 @@ tr:nth-child(even) {
   font-size: 14px;
   border: 1px solid #ddd; 
   background-color: white; 
-  color: #333;
+  color: #4d4d4d;
 }
 
 .plot-controls {
@@ -489,5 +557,18 @@ tr:nth-child(even) {
   left: 0;
   background-color: #f2f2f2;
   z-index: 2;
+}
+
+/* 前処理コントロールのスタイル */
+.preprocessing-controls {
+  margin-bottom: 20px;
+}
+
+.preprocessing-controls h3 {
+  margin-bottom: 10px;
+}
+
+.preprocessing-controls div {
+  margin-bottom: 10px;
 }
 </style>

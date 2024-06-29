@@ -65,9 +65,36 @@ def upload_csv():
 @app.route("/remove_na", methods=["POST"])
 def remove_na():
     global original_df, processed_df
-    if original_df is None:
+    columns = request.json.get('columns', [])
+    if processed_df is None:
         return jsonify({"error": "No data uploaded yet"}), 400
-    processed_df = original_df.dropna()
+    if not columns:
+        processed_df = processed_df.dropna()
+    else:
+        processed_df = processed_df.dropna(subset=columns)
+    described_prcd_df = describing(processed_df)
+    df_to_json = processed_df.replace({np.nan: None})
+    described_df_to_json = described_prcd_df.replace({np.nan: None})
+    data = {
+        "headers": df_to_json.columns.tolist(),
+        "data": df_to_json.to_dict(orient='records'),
+        "headers_described": described_df_to_json.columns.tolist(),
+        "data_described": described_df_to_json.to_dict(orient='records')
+    }
+    return jsonify(data)
+
+@app.route("/filter_by_value", methods=["POST"])
+def filter_by_value():
+    global original_df, processed_df
+    column = request.json.get('column')
+    values = request.json.get('values')
+    if processed_df is None or column is None or values is None:
+        return jsonify({"error": "Invalid request parameters"}), 400
+    if isinstance(values[0], (int, float)):
+        min_val, max_val = values
+        processed_df = processed_df[(processed_df[column] >= min_val) & (processed_df[column] <= max_val)]
+    else:
+        processed_df = processed_df[processed_df[column].isin(values)]
     described_prcd_df = describing(processed_df)
     df_to_json = processed_df.replace({np.nan: None})
     described_df_to_json = described_prcd_df.replace({np.nan: None})
@@ -119,6 +146,18 @@ def plot_scatter():
         error_message = f"Error in plot_scatter: {str(e)}"
         print(error_message)  # Flaskサーバーのコンソールにエラーメッセージを表示
         return jsonify({"error": error_message}), 500
+
+@app.route("/get_column_values", methods=["POST"])
+def get_column_values():
+    global original_df
+    column = request.json.get('column')
+    if original_df is None or column is None:
+        return jsonify({"error": "Invalid request parameters"}), 400
+    values = original_df[column].dropna().unique().tolist()
+    if np.issubdtype(original_df[column].dtype, np.number):
+        return jsonify({"values": [min(values), max(values)]})
+    else:
+        return jsonify({"values": values})
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
