@@ -149,12 +149,12 @@ def plot_scatter():
 
 @app.route("/get_column_values", methods=["POST"])
 def get_column_values():
-    global original_df
+    global processed_df
     column = request.json.get('column')
-    if original_df is None or column is None:
+    if processed_df is None or column is None:
         return jsonify({"error": "Invalid request parameters"}), 400
-    values = original_df[column].dropna().unique().tolist()
-    if np.issubdtype(original_df[column].dtype, np.number):
+    values = processed_df[column].dropna().unique().tolist()
+    if np.issubdtype(processed_df[column].dtype, np.number):
         return jsonify({"values": [min(values), max(values)]})
     else:
         return jsonify({"values": values})

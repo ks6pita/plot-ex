@@ -180,6 +180,15 @@ watch(selectedFilterColumn, async (newColumn) => {
     columnValues.value = [];
   }
 });
+
+const toggleSelection = (value: any) => {
+  const index = selectedFilterValues.value.indexOf(value);
+  if (index === -1) {
+    selectedFilterValues.value.push(value);
+  } else {
+    selectedFilterValues.value.splice(index, 1);
+  }
+};
 </script>
 
 <template>
@@ -214,28 +223,32 @@ watch(selectedFilterColumn, async (newColumn) => {
             </label>
             <button type="button" @click="handleRemoveNA(selectedRemoveNAColumn ? [selectedRemoveNAColumn] : [])">Remove NA</button>
           </div>
-          <div>
-            <label>
-              Filter by value:
-              <select v-model="selectedFilterColumn" :style="dropdownStyle(selectedFilterColumn)">
-                <option value="">Select Column</option>
-                <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
-              </select>
-            </label>
-            <div v-if="columnValues.length > 0">
-              <label v-if="typeof columnValues[0] === 'number'">
-                Range:
-                <input type="number" v-model.number="columnValues[0]" />
-                to
-                <input type="number" v-model.number="columnValues[1]" />
-              </label>
-              <label v-else>
-                Values:
-                <select multiple v-model="selectedFilterValues">
-                  <option v-for="value in columnValues" :key="value" :value="value">{{ value }}</option>
+          <div class="filter-by-value">
+            <div class="filter-left">
+              <label>
+                Filter by value:
+                <select v-model="selectedFilterColumn" :style="dropdownStyle(selectedFilterColumn)">
+                  <option value="">Select Column</option>
+                  <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
                 </select>
               </label>
               <button type="button" @click="handleFilterByValue(selectedFilterColumn, selectedFilterValues)">Filter</button>
+            </div>
+            <div class="filter-right">
+              <label v-if="typeof columnValues[0] === 'number'">
+                Range:
+                <input type="number" v-model.number="columnValues[0]" :style="dropdownStyle(columnValues[0] === null ? '' : columnValues[0].toString())" />
+                to
+                <input type="number" v-model.number="columnValues[1]" :style="dropdownStyle(columnValues[1] === null ? '' : columnValues[1].toString())" />
+              </label>
+              <label v-else>
+                Values:
+                <div class="multiselect-container">
+                  <div v-for="value in columnValues" :key="value" @click="toggleSelection(value)" :class="{'selected': selectedFilterValues.includes(value)}" :style="dropdownStyle(selectedFilterValues.includes(value) ? value.toString() : '')">
+                    {{ value }}
+                  </div>
+                </div>
+              </label>
             </div>
           </div>
         </div>
@@ -570,5 +583,39 @@ tr:nth-child(even) {
 
 .preprocessing-controls div {
   margin-bottom: 10px;
+}
+
+.filter-by-value {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+}
+
+.filter-left {
+  flex: 1;
+}
+
+.filter-right {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.multiselect-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.multiselect-container div {
+  padding: 5px;
+  border: 1px solid #ddd;
+  background-color: white;
+  cursor: pointer;
+}
+
+.multiselect-container div.selected {
+  background-color: lightblue;
 }
 </style>
