@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import axios from "axios";
 import { ref, reactive } from "vue";
+import Plotly from "plotly.js-dist-min";
 
 // APIエンドポイントの設定
 const endpoint = import.meta.env.VITE_API_ENDPOINT as string;
@@ -18,6 +19,18 @@ const tableState = reactive({
 
 // エラーメッセージの管理
 const error = ref<string | null>(null);
+
+// グラフの描画設定
+const plotSettings = reactive({
+  x: '',
+  y: '',
+  color: '',
+  facet_col: '',
+  facet_row: ''
+});
+
+// プロット用のref
+const plotRef = ref<HTMLElement | null>(null);
 
 // ファイルが変更されたときの処理
 const handleFileChange = (event: Event) => {
@@ -56,6 +69,23 @@ const handleRemoveNA = async () => {
   }
 };
 
+// 散布図をプロットする処理
+const handlePlot = async () => {
+  if (!plotSettings.x || !plotSettings.y) {
+    error.value = "Please select both x and y axes";
+    return;
+  }
+  try {
+    error.value = null; // エラーメッセージをクリア
+    const response = await axios.post(endpoint + "/plot_scatter", plotSettings); // プロット設定をサーバーに送信
+    const plotData = JSON.parse(response.data);
+    Plotly.newPlot(plotRef.value, plotData.data, plotData.layout);
+  } catch (error) {
+    console.error("Plot error:", error);
+    error.value = "Error generating plot"; // エラーメッセージを設定
+  }
+};
+
 // テーブルの状態を更新する関数
 const updateTableState = (data: any) => {
   if (data && data.headers && Array.isArray(data.data) && data.headers_described && Array.isArray(data.data_described)) {
@@ -88,45 +118,90 @@ const updateTableState = (data: any) => {
     <!-- エラーメッセージの表示 -->
     <p v-if="error" style="color: red;">{{ error }}</p>
     
-    <!-- オリジナルデータテーブルの情報表示 -->
-    <div v-if="tableState.data.length > 0 && tableState.headers.length > 0" class="table-info">
-      <p>Original Data - Columns: {{ tableState.headers.length }}, Rows: {{ tableState.data.length }}</p>
-    </div>
+    <!-- データ表示とプロットエリア -->
+    <div class="split-view">
+      <div class="left-view">
+        <!-- オリジナルデータテーブルの情報表示 -->
+        <div v-if="tableState.data.length > 0 && tableState.headers.length > 0" class="table-info">
+          <p>Original Data - Columns: {{ tableState.headers.length }}, Rows: {{ tableState.data.length }}</p>
+        </div>
 
-    <!-- オリジナルデータテーブルの表示 -->
-    <div class="table-container" v-if="tableState.data.length > 0 && tableState.headers.length > 0">
-      <table>
-        <thead>
-          <tr>
-            <th v-for="header in tableState.headers" :key="header">{{ header }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, rowIndex) in tableState.data" :key="rowIndex">
-            <td v-for="header in tableState.headers" :key="header">
-              {{ row[header] === null ? 'N/A' : row[header] }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+        <!-- オリジナルデータテーブルの表示 -->
+        <div class="table-container" v-if="tableState.data.length > 0 && tableState.headers.length > 0">
+          <table>
+            <thead>
+              <tr>
+                <th v-for="header in tableState.headers" :key="header">{{ header }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, rowIndex) in tableState.data" :key="rowIndex">
+                <td v-for="header in tableState.headers" :key="header">
+                  {{ row[header] === null ? 'N/A' : row[header] }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-    <!-- describedテーブルの表示 -->
-    <div style="margin-top: 30px;" v-if="tableState.dataDescribed.length > 0 && tableState.headersDescribed.length > 0">
-      <table>
-        <thead>
-          <tr>
-            <th v-for="header in tableState.headersDescribed" :key="header">{{ header }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, rowIndex) in tableState.dataDescribed" :key="rowIndex">
-            <td v-for="header in tableState.headersDescribed" :key="header">
-              {{ row[header] === null ? '-' : row[header] }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <!-- describedテーブルの表示 -->
+        <div style="margin-top: 30px;" v-if="tableState.dataDescribed.length > 0 && tableState.headersDescribed.length > 0">
+          <table>
+            <thead>
+              <tr>
+                <th v-for="header in tableState.headersDescribed" :key="header">{{ header }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, rowIndex) in tableState.dataDescribed" :key="rowIndex">
+                <td v-for="header in tableState.headersDescribed" :key="header">
+                  {{ row[header] === null ? '-' : row[header] }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="right-view">
+        <!-- 散布図プロットの設定 -->
+        <div class="plot-settings">
+          <label>
+            X Axis:
+            <select v-model="plotSettings.x">
+              <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
+            </select>
+          </label>
+          <label>
+            Y Axis:
+            <select v-model="plotSettings.y">
+              <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
+            </select>
+          </label>
+          <label>
+            Color:
+            <select v-model="plotSettings.color">
+              <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
+            </select>
+          </label>
+          <label>
+            Facet Column:
+            <select v-model="plotSettings.facet_col">
+              <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
+            </select>
+          </label>
+          <label>
+            Facet Row:
+            <select v-model="plotSettings.facet_row">
+              <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
+            </select>
+          </label>
+          <button type="button" @click="handlePlot">Plot Scatter</button>
+        </div>
+        
+        <!-- プロットエリア -->
+        <div ref="plotRef" class="plot-container"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -140,6 +215,8 @@ const updateTableState = (data: any) => {
 /* コントロールエリアのスタイル */
 .controls {
   margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
 }
 
 /* ボタンのスタイル */
@@ -202,5 +279,49 @@ thead {
 /* 偶数行の背景色を変更 */
 tr:nth-child(even) {
   background-color: #f9f9f9;
+}
+
+/* プロット設定のスタイル */
+.plot-settings {
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.plot-settings label {
+  display: flex;
+  flex-direction: column;
+}
+.plot-settings select {
+  margin-top: 5px;
+}
+
+/* Split viewのスタイル */
+.split-view {
+  display: flex;
+  height: calc(100vh - 100px); /* コントロールエリアの高さを引いた高さを設定 */
+}
+
+.left-view, .right-view {
+  flex: 1;
+  overflow: auto;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.left-view {
+  border-right: 1px solid #ddd;
+}
+
+.right-view {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* プロットエリアのスタイル */
+.plot-container {
+  flex: 1;
+  margin-top: 20px;
 }
 </style>
