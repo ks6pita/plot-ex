@@ -39,7 +39,8 @@ const plotSettings = reactive({
   facet_row: '',
   symbol: '',
   size: 6,
-  opacity: 0.8
+  opacity: 0.8,
+  colorPalette: ''
 });
 
 // プロット用のref
@@ -113,28 +114,25 @@ const resetPlotSettings = () => {
   plotSettings.symbol = '';
   plotSettings.size = 6;
   plotSettings.opacity = 0.8;
+  plotSettings.colorPalette = '';
 };
 
 // テーブルの状態を更新する関数
 const updateTableState = (data: any) => {
   if (data && data.headers && Array.isArray(data.data) && data.headers_described && Array.isArray(data.data_described)) {
-    tableState.headers = data.headers.filter(header => header !== 'index');
-    tableState.data = data.data;
-    tableState.headersDescribed = translateHeaders(data.headers_described);
-    tableState.dataDescribed = data.data_described;
+    tableState.headers = ['index', ...data.headers]; // インデックス列を追加したヘッダーを設定
+    tableState.data = data.data.map((row, index) => ({ index, ...row })); // 各行にインデックスを追加
+    tableState.headersDescribed = translateHeaders(data.headers_described); // describedテーブルのヘッダーを設定
+    tableState.dataDescribed = data.data_described; // describedテーブルのデータを設定
   } else {
-    error.value = "Unexpected response structure";
+    error.value = "Unexpected response structure"; // エラーメッセージを設定
     console.error("Unexpected response structure:", data);
   }
+  console.log("Table Headers:", tableState.headers);
+  console.log("Table Data:", tableState.data);
+  console.log("Described Table Headers:", tableState.headersDescribed);
+  console.log("Described Table Data:", tableState.dataDescribed);
 };
-
-// 数値型のカラムを取得する関数
-const getNumericColumns = computed(() => {
-  return tableState.headers.filter(header => {
-    const columnData = tableState.data.map(row => row[header]);
-    return columnData.every(value => !isNaN(value) && value !== null);
-  });
-});
 
 // 数値型以外のカラムを取得する関数
 const getNonNumericColumns = computed(() => {
@@ -146,26 +144,43 @@ const getNonNumericColumns = computed(() => {
 
 // 選択されたパラメータに応じてドロップダウンの背景色を変更する関数
 const dropdownStyle = (selected: string) => {
-  return selected ? { backgroundColor: 'lightblue' } : { backgroundColor: 'white' };
+  if (selected) {
+    if (selected === 'Default') {
+      return { backgroundColor: 'white' };
+    }
+    return { backgroundColor: 'lightblue' };
+  }
+  return { backgroundColor: 'white' };
 };
+
+// カラーパレットの選択肢
+const colorPalettes = ['Default', 'jet', 'RdBu', 'RdBu_r', 'Blues', 'Reds', 'Greens'];
+
 </script>
 
 <template>
   <div class="container">
     <div class="controls">
+      <!-- ファイル選択用のインプット -->
       <input type="file" @change="handleFileChange" />
+      <!-- CSVファイルアップロードボタン -->
       <button type="button" @click="handleUpload">Upload CSV</button>
+      <!-- NA値削除ボタン -->
       <button type="button" @click="handleRemoveNA">Remove NA</button>
     </div>
     
+    <!-- エラーメッセージの表示 -->
     <p v-if="error" style="color: red;">{{ error }}</p>
     
+    <!-- データ表示とプロットエリア -->
     <div class="split-view">
       <div class="left-view">
+        <!-- オリジナルデータテーブルの情報表示 -->
         <div v-if="tableState.data.length > 0 && tableState.headers.length > 0" class="table-info">
           <p>Columns: {{ tableState.headers.length }}, Rows: {{ tableState.data.length }}</p>
         </div>
 
+        <!-- オリジナルデータテーブルの表示 -->
         <div class="table-container" v-if="tableState.data.length > 0 && tableState.headers.length > 0">
           <table>
             <thead>
@@ -185,6 +200,7 @@ const dropdownStyle = (selected: string) => {
           </table>
         </div>
 
+        <!-- describedテーブルの表示 -->
         <div style="margin-top: 30px;" v-if="tableState.dataDescribed.length > 0 && tableState.headersDescribed.length > 0" class="table-container">
           <table>
             <thead>
@@ -211,9 +227,8 @@ const dropdownStyle = (selected: string) => {
         </div>
       </div>
 
-      <div class="resizable-divider"></div>
-      
       <div class="right-view">
+        <!-- 散布図プロットの設定 -->
         <div class="plot-controls">
           <div class="plot-settings-row">
             <button type="button" @click="resetPlotSettings" class="reset-button">Reset</button>
@@ -261,6 +276,13 @@ const dropdownStyle = (selected: string) => {
                 <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
               </select>
             </label>
+            <label>
+              Color Palette:
+              <select v-model="plotSettings.colorPalette" :disabled="!plotSettings.color" :style="dropdownStyle(plotSettings.colorPalette)">
+                <option value="">Select Color Palette</option>
+                <option v-for="palette in colorPalettes" :key="palette" :value="palette">{{ palette }}</option>
+              </select>
+            </label>
           </div>
           <div class="plot-settings-row">
             <label>
@@ -277,6 +299,7 @@ const dropdownStyle = (selected: string) => {
           </div>
         </div>
         
+        <!-- プロットエリア -->
         <div ref="plotRef" class="plot-container"></div>
       </div>
     </div>
@@ -284,16 +307,19 @@ const dropdownStyle = (selected: string) => {
 </template>
 
 <style scoped>
+/* コンテナのスタイル */
 .container {
   padding: 20px;
 }
 
+/* コントロールエリアのスタイル */
 .controls {
   margin-bottom: 20px;
   display: flex;
   gap: 10px;
 }
 
+/* ボタンのスタイル */
 button {
   background-color: grey;
   border: black;
@@ -307,15 +333,18 @@ button {
   border-radius: 4px;
 }
 
+/* ファイル入力のスタイル */
 input[type="file"] {
   margin-right: 10px;
 }
 
+/* テーブル情報のスタイル */
 .table-info {
   margin-bottom: 10px;
   font-size: 14px;
 }
 
+/* テーブルコンテナのスタイル */
 .table-container {
   max-height: 400px;
   overflow-y: auto;
@@ -354,22 +383,23 @@ tr:nth-child(even) {
 }
 
 .plot-settings {
+  margin-bottom: 20px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  padding: 10px;
+  border: 1px solid #ddd;
 }
-
 .plot-settings label {
   display: flex;
   flex-direction: column;
 }
-
 .plot-settings select {
   margin-top: 5px;
   padding: 5px;
   font-size: 14px;
-  border: 1px solid #ddd;
-  background-color: #ffffff;
+  border: 1px solid #ddd; 
+  background-color: white; 
   color: #333;
 }
 
@@ -439,15 +469,14 @@ tr:nth-child(even) {
 }
 
 .left-view {
-  flex: 6;
+  flex: 4;
   border-right: 1px solid #ddd;
 }
 
 .right-view {
-  flex: 4;
+  flex: 6;
   display: flex;
   flex-direction: column;
-  padding: 10px;
 }
 
 .plot-container {

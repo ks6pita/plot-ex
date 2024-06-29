@@ -91,9 +91,7 @@ def plot_scatter():
     color = request_data.get('color', None)
     facet_col = request_data.get('facet_col', None)
     facet_row = request_data.get('facet_row', None)
-    symbol = request_data.get('symbol', None)
-    size = request_data.get('size', 6)
-    opacity = request_data.get('opacity', 0.8)
+    color_palette = request_data.get('colorPalette', None)
     
     if not x or not y:
         return jsonify({"error": "x and y axis must be specified"}), 400
@@ -110,11 +108,11 @@ def plot_scatter():
             plot_params['facet_col'] = facet_col
         if facet_row:
             plot_params['facet_row'] = facet_row
-        if symbol:
-            plot_params['symbol'] = symbol
+        if color_palette and color_palette != 'Default':
+            plot_params['color_continuous_scale'] = color_palette
         
         fig = px.scatter(**plot_params)
-        fig.update_traces(marker=dict(size=size, opacity=opacity))
+        fig.update_traces(marker=dict(size=request_data.get('size', 6), opacity=request_data.get('opacity', 0.8)))
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return jsonify(graph_json)
     except Exception as e:
