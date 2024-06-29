@@ -14,7 +14,7 @@ processed_df = None  # NAを除去したデータを保持するための変数
 
 def describing(df):
     missing_values_df = df.isnull().sum().reset_index()
-    missing_values_df.columns = ['ColumnName', 'MissingValues']
+    missing_values_df.columns = ['ColumnName', 'MissVal']
     stats_df = df.describe(include='all').transpose().reset_index()
     stats_df.columns = ['ColumnName'] + list(stats_df.columns[1:])
     def format_sigfig(value, sigfig=4):
@@ -25,11 +25,12 @@ def describing(df):
     stats_df['std'] = stats_df['std'].apply(format_sigfig)
     merged_df = pd.merge(missing_values_df, stats_df, on='ColumnName', how='left')
     dtypes_df = pd.DataFrame(df.dtypes).reset_index()
-    dtypes_df.columns = ['ColumnName', 'DataType']
-    dtypes_df['DataType'] = dtypes_df['DataType'].astype(str)
+    dtypes_df.columns = ['ColumnName', 'Type']
+    dtypes_df['Type'] = dtypes_df['Type'].astype(str)
     final_df = pd.merge(merged_df, dtypes_df, on='ColumnName', how='left')
-    column_order = ['ColumnName', 'DataType', 'count', 'MissingValues', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'unique', 'top', 'freq']
-    final_df = final_df[column_order]
+    column_order = ['ColumnName', 'Type', 'count', 'Miss', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'unique', 'top', 'freq']
+    final_df = final_df.reindex(columns=column_order)
+    final_df.columns = ['ColumnName', 'Type', 'Rows', 'Miss', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'unique', 'top', 'freq']
     return final_df
 
 @app.route("/")

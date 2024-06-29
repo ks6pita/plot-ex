@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from "axios";
-import { ref, reactive } from "vue";
+import { ref, reactive, computed } from "vue";
 import Plotly from "plotly.js-dist-min";
 
 // APIエンドポイントの設定
@@ -19,6 +19,16 @@ const tableState = reactive({
 
 // エラーメッセージの管理
 const error = ref<string | null>(null);
+
+// describeテーブルのカラム名の翻訳
+const translateHeaders = (headers: string[]) => {
+  return headers.map(header => {
+    if (header === 'count') return 'Rows';
+    if (header === 'MissingValues') return 'MissVal';
+    if (header === 'DataType') return 'Type';
+    return header;
+  });
+};
 
 // グラフの描画設定
 const plotSettings = reactive({
@@ -86,12 +96,21 @@ const handlePlot = async () => {
   }
 };
 
+// 散布図の設定をリセットする関数
+const resetPlotSettings = () => {
+  plotSettings.x = '';
+  plotSettings.y = '';
+  plotSettings.color = '';
+  plotSettings.facet_col = '';
+  plotSettings.facet_row = '';
+};
+
 // テーブルの状態を更新する関数
 const updateTableState = (data: any) => {
   if (data && data.headers && Array.isArray(data.data) && data.headers_described && Array.isArray(data.data_described)) {
     tableState.headers = ['index', ...data.headers]; // インデックス列を追加したヘッダーを設定
     tableState.data = data.data.map((row, index) => ({ index, ...row })); // 各行にインデックスを追加
-    tableState.headersDescribed = data.headers_described; // describedテーブルのヘッダーを設定
+    tableState.headersDescribed = translateHeaders(data.headers_described); // describedテーブルのヘッダーを設定
     tableState.dataDescribed = data.data_described; // describedテーブルのデータを設定
   } else {
     error.value = "Unexpected response structure"; // エラーメッセージを設定
@@ -102,6 +121,20 @@ const updateTableState = (data: any) => {
   console.log("Described Table Headers:", tableState.headersDescribed);
   console.log("Described Table Data:", tableState.dataDescribed);
 };
+
+// 数値型以外のカラムを取得する関数
+const getNonNumericColumns = computed(() => {
+  return tableState.headers.filter(header => {
+    const columnData = tableState.data.map(row => row[header]);
+    return columnData.every(value => isNaN(value) || value === null);
+  });
+});
+
+// 選択されたパラメータに応じてドロップダウンの背景色を変更する関数
+const dropdownStyle = (selected: string) => {
+  return selected ? { backgroundColor: 'lightblue' } : {};
+};
+
 </script>
 
 <template>
@@ -131,7 +164,9 @@ const updateTableState = (data: any) => {
           <table>
             <thead>
               <tr>
-                <th v-for="header in tableState.headers" :key="header">{{ header }}</th>
+                <th v-for="header in tableState.headers" :key="header">
+                  <div class="header-cell">{{ header }}</div>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -149,7 +184,9 @@ const updateTableState = (data: any) => {
           <table>
             <thead>
               <tr>
-                <th v-for="header in tableState.headersDescribed" :key="header">{{ header }}</th>
+                <th v-for="header in tableState.headersDescribed" :key="header">
+                  <div class="header-cell">{{ header }}</div>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -168,35 +205,41 @@ const updateTableState = (data: any) => {
         <div class="plot-settings">
           <label>
             X Axis:
-            <select v-model="plotSettings.x">
+            <select v-model="plotSettings.x" :style="dropdownStyle(plotSettings.x)">
+              <option value="">Select X Axis</option>
               <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
             </select>
           </label>
           <label>
             Y Axis:
-            <select v-model="plotSettings.y">
+            <select v-model="plotSettings.y" :style="dropdownStyle(plotSettings.y)">
+              <option value="">Select Y Axis</option>
               <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
             </select>
           </label>
           <label>
             Color:
-            <select v-model="plotSettings.color">
+            <select v-model="plotSettings.color" :style="dropdownStyle(plotSettings.color)">
+              <option value="">Select Color</option>
               <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
             </select>
           </label>
           <label>
             Facet Column:
-            <select v-model="plotSettings.facet_col">
-              <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
+            <select v-model="plotSettings.facet_col" :style="dropdownStyle(plotSettings.facet_col)">
+              <option value="">Select Facet Column</option>
+              <option v-for="header in getNonNumericColumns" :key="header" :value="header">{{ header }}</option>
             </select>
           </label>
           <label>
             Facet Row:
-            <select v-model="plotSettings.facet_row">
-              <option v-for="header in tableState.headers" :key="header" :value="header">{{ header }}</option>
+            <select v-model="plotSettings.facet_row" :style="dropdownStyle(plotSettings.facet_row)">
+              <option value="">Select Facet Row</option>
+              <option v-for="header in getNonNumericColumns" :key="header" :value="header">{{ header }}</option>
             </select>
           </label>
           <button type="button" @click="handlePlot">Plot Scatter</button>
+          <button type="button" @click="resetPlotSettings">Reset</button>
         </div>
         
         <!-- プロットエリア -->
@@ -281,12 +324,20 @@ tr:nth-child(even) {
   background-color: #f9f9f9;
 }
 
+/* ヘッダーセルのスタイル */
+.header-cell {
+  white-space: pre-wrap; /* 折り返しを有効にしてセル内で折り返し */
+  word-wrap: break-word; /* 長い単語を折り返し */
+}
+
 /* プロット設定のスタイル */
 .plot-settings {
   margin-bottom: 20px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  padding: 10px;
+  border: 1px solid #ddd;
 }
 .plot-settings label {
   display: flex;
@@ -294,6 +345,11 @@ tr:nth-child(even) {
 }
 .plot-settings select {
   margin-top: 5px;
+  padding: 5px;
+  font-size: 14px;
+  border: 1px solid #ddd; /* ボックスの枠を追加 */
+  background-color: #ffffff; /* デフォルトの背景色に戻す */
+  color: #333;
 }
 
 /* Split viewのスタイル */
@@ -302,21 +358,22 @@ tr:nth-child(even) {
   height: calc(100vh - 100px); /* コントロールエリアの高さを引いた高さを設定 */
 }
 
-.left-view, .right-view {
-  flex: 1;
+.left-view {
+  flex: 4;
   overflow: auto;
   padding: 10px;
+  border-right: 1px solid #ddd;
   box-sizing: border-box;
 }
 
-.left-view {
-  border-right: 1px solid #ddd;
-}
-
 .right-view {
+  flex: 6;
+  overflow: auto;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  box-sizing: border-box;
 }
 
 /* プロットエリアのスタイル */
