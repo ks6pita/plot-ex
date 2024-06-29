@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from "axios";
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import Plotly from "plotly.js-dist-min";
 
 // APIエンドポイントの設定
@@ -36,7 +36,10 @@ const plotSettings = reactive({
   y: '',
   color: '',
   facet_col: '',
-  facet_row: ''
+  facet_row: '',
+  symbol: '',
+  size: 6,
+  opacity: 0.8
 });
 
 // プロット用のref
@@ -87,7 +90,11 @@ const handlePlot = async () => {
   }
   try {
     error.value = null; // エラーメッセージをクリア
-    const response = await axios.post(endpoint + "/plot_scatter", plotSettings); // プロット設定をサーバーに送信
+    const response = await axios.post(endpoint + "/plot_scatter", {
+      ...plotSettings,
+      size: Number(plotSettings.size),
+      opacity: Number(plotSettings.opacity)
+    }); // プロット設定をサーバーに送信
     const plotData = JSON.parse(response.data);
     Plotly.newPlot(plotRef.value, plotData.data, plotData.layout);
   } catch (error) {
@@ -103,6 +110,9 @@ const resetPlotSettings = () => {
   plotSettings.color = '';
   plotSettings.facet_col = '';
   plotSettings.facet_row = '';
+  plotSettings.symbol = '';
+  plotSettings.size = 6;
+  plotSettings.opacity = 0.8;
 };
 
 // テーブルの状態を更新する関数
@@ -135,6 +145,34 @@ const dropdownStyle = (selected: string) => {
   return selected ? { backgroundColor: 'lightblue' } : {};
 };
 
+// リサイズイベントを設定する関数
+onMounted(() => {
+  const divider = document.querySelector('.resizable-divider');
+  const leftView = document.querySelector('.left-view');
+  const rightView = document.querySelector('.right-view');
+  
+  let isResizing = false;
+  
+  const mouseMoveHandler = (e) => {
+    if (!isResizing) return;
+    
+    const offsetRight = document.body.offsetWidth - (e.clientX - document.body.offsetLeft);
+    leftView.style.flex = `0 0 ${e.clientX - document.body.offsetLeft}px`;
+    rightView.style.flex = `0 0 ${offsetRight}px`;
+  };
+  
+  const mouseUpHandler = () => {
+    isResizing = false;
+    document.removeEventListener('mousemove', mouseMoveHandler);
+    document.removeEventListener('mouseup', mouseUpHandler);
+  };
+
+  divider.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    document.addEventListener('mousemove', mouseMoveHandler);
+    document.addEventListener('mouseup', mouseUpHandler);
+  });
+});
 </script>
 
 <template>
@@ -156,7 +194,7 @@ const dropdownStyle = (selected: string) => {
       <div class="left-view">
         <!-- オリジナルデータテーブルの情報表示 -->
         <div v-if="tableState.data.length > 0 && tableState.headers.length > 0" class="table-info">
-          <p>Original Data - Columns: {{ tableState.headers.length }}, Rows: {{ tableState.data.length }}</p>
+          <p>Columns: {{ tableState.headers.length }}, Rows: {{ tableState.data.length }}</p>
         </div>
 
         <!-- オリジナルデータテーブルの表示 -->
@@ -180,18 +218,24 @@ const dropdownStyle = (selected: string) => {
         </div>
 
         <!-- describedテーブルの表示 -->
-        <div style="margin-top: 30px;" v-if="tableState.dataDescribed.length > 0 && tableState.headersDescribed.length > 0">
+        <div style="margin-top: 30px;" v-if="tableState.dataDescribed.length > 0 && tableState.headersDescribed.length > 0" class="table-container">
           <table>
             <thead>
               <tr>
-                <th v-for="header in tableState.headersDescribed" :key="header">
+                <th class="sticky-column">
+                  <div class="header-cell">ColumnName</div>
+                </th>
+                <th v-for="header in tableState.headersDescribed.slice(1)" :key="header">
                   <div class="header-cell">{{ header }}</div>
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(row, rowIndex) in tableState.dataDescribed" :key="rowIndex">
-                <td v-for="header in tableState.headersDescribed" :key="header">
+                <td class="sticky-column">
+                  {{ row['ColumnName'] }}
+                </td>
+                <td v-for="header in tableState.headersDescribed.slice(1)" :key="header">
                   {{ row[header] === null ? '-' : row[header] }}
                 </td>
               </tr>
@@ -200,8 +244,23 @@ const dropdownStyle = (selected: string) => {
         </div>
       </div>
 
+      <div class="resizable-divider"></div> <!-- 追加 -->
+      
       <div class="right-view">
         <!-- 散布図プロットの設定 -->
+        <div class="plot-controls">
+          <button type="button" @click="handlePlot">Plot Scatter</button>
+          <button type="button" @click="resetPlotSettings">Reset</button>
+          <label>
+            Size:
+            <input type="range" v-model="plotSettings.size" min="1" max="20" step="1">
+          </label>
+          <label>
+            Opacity:
+            <input type="range" v-model="plotSettings.opacity" min="0.1" max="1" step="0.1">
+          </label>
+        </div>
+        <hr>
         <div class="plot-settings">
           <label>
             X Axis:
@@ -225,6 +284,13 @@ const dropdownStyle = (selected: string) => {
             </select>
           </label>
           <label>
+            Symbol:
+            <select v-model="plotSettings.symbol" :style="dropdownStyle(plotSettings.symbol)">
+              <option value="">Select Symbol</option>
+              <option v-for="header in getNonNumericColumns" :key="header" :value="header">{{ header }}</option>
+            </select>
+          </label>
+          <label>
             Facet Column:
             <select v-model="plotSettings.facet_col" :style="dropdownStyle(plotSettings.facet_col)">
               <option value="">Select Facet Column</option>
@@ -238,8 +304,6 @@ const dropdownStyle = (selected: string) => {
               <option v-for="header in getNonNumericColumns" :key="header" :value="header">{{ header }}</option>
             </select>
           </label>
-          <button type="button" @click="handlePlot">Plot Scatter</button>
-          <button type="button" @click="resetPlotSettings">Reset</button>
         </div>
         
         <!-- プロットエリア -->
@@ -332,12 +396,9 @@ tr:nth-child(even) {
 
 /* プロット設定のスタイル */
 .plot-settings {
-  margin-bottom: 20px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 10px;
-  border: 1px solid #ddd;
 }
 .plot-settings label {
   display: flex;
@@ -347,15 +408,49 @@ tr:nth-child(even) {
   margin-top: 5px;
   padding: 5px;
   font-size: 14px;
-  border: 1px solid #ddd; /* ボックスの枠を追加 */
-  background-color: #ffffff; /* デフォルトの背景色に戻す */
+  border: 1px solid #ddd;
+  background-color: #ffffff;
   color: #333;
+}
+.plot-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.plot-controls button {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+.plot-controls label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.plot-controls input[type="range"] {
+  margin-top: 5px;
 }
 
 /* Split viewのスタイル */
 .split-view {
   display: flex;
   height: calc(100vh - 100px); /* コントロールエリアの高さを引いた高さを設定 */
+}
+
+.resizable-divider {
+  width: 5px;
+  cursor: ew-resize;
+  background-color: #ccc;
+  position: relative;
+}
+
+.resizable-divider:after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
 }
 
 .left-view {
@@ -380,5 +475,13 @@ tr:nth-child(even) {
 .plot-container {
   flex: 1;
   margin-top: 20px;
+}
+
+/* Sticky column */
+.sticky-column {
+  position: sticky;
+  left: 0;
+  background-color: #f2f2f2;
+  z-index: 2;
 }
 </style>

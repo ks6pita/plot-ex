@@ -28,9 +28,9 @@ def describing(df):
     dtypes_df.columns = ['ColumnName', 'Type']
     dtypes_df['Type'] = dtypes_df['Type'].astype(str)
     final_df = pd.merge(merged_df, dtypes_df, on='ColumnName', how='left')
-    column_order = ['ColumnName', 'Type', 'count', 'Miss', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'unique', 'top', 'freq']
+    column_order = ['ColumnName', 'Type', 'count', 'MissVal', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'unique', 'top', 'freq']
     final_df = final_df.reindex(columns=column_order)
-    final_df.columns = ['ColumnName', 'Type', 'Rows', 'Miss', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'unique', 'top', 'freq']
+    final_df.columns = ['ColumnName', 'Type', 'Rows', 'MissVal', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'unique', 'top', 'freq']
     return final_df
 
 @app.route("/")
@@ -91,20 +91,30 @@ def plot_scatter():
     color = request_data.get('color', None)
     facet_col = request_data.get('facet_col', None)
     facet_row = request_data.get('facet_row', None)
+    symbol = request_data.get('symbol', None)
+    size = request_data.get('size', 6)
+    opacity = request_data.get('opacity', 0.8)
     
     if not x or not y:
         return jsonify({"error": "x and y axis must be specified"}), 400
     
     try:
-        plot_params = {'x': x, 'y': y, 'data_frame': processed_df}
+        plot_params = {
+            'x': x,
+            'y': y,
+            'data_frame': processed_df
+        }
         if color:
             plot_params['color'] = color
         if facet_col:
             plot_params['facet_col'] = facet_col
         if facet_row:
             plot_params['facet_row'] = facet_row
+        if symbol:
+            plot_params['symbol'] = symbol
         
         fig = px.scatter(**plot_params)
+        fig.update_traces(marker=dict(size=size, opacity=opacity))
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return jsonify(graph_json)
     except Exception as e:
