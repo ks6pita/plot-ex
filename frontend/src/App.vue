@@ -591,6 +591,9 @@ tr:nth-child(even) {
   align-items: center;
   width: 100%;
   max-width: 600px;
+  height: 150px; /* 固定サイズに設定 */
+  border: 1px solid #ddd;
+  padding: 10px;
 }
 
 .filter-left {
@@ -600,6 +603,7 @@ tr:nth-child(even) {
 .filter-right {
   flex: 1;
   overflow-y: auto;
+  height: 100%;
 }
 
 .multiselect-container {

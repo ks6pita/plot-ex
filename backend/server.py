@@ -65,13 +65,13 @@ def upload_csv():
 @app.route("/remove_na", methods=["POST"])
 def remove_na():
     global original_df, processed_df
-    columns = request.json.get('columns', [])
-    if processed_df is None:
+    if original_df is None:
         return jsonify({"error": "No data uploaded yet"}), 400
+    columns = request.json.get('columns', [])
     if not columns:
-        processed_df = processed_df.dropna()
+        processed_df = original_df.dropna()
     else:
-        processed_df = processed_df.dropna(subset=columns)
+        processed_df = original_df.dropna(subset=columns)
     described_prcd_df = describing(processed_df)
     df_to_json = processed_df.replace({np.nan: None})
     described_df_to_json = described_prcd_df.replace({np.nan: None})
@@ -88,7 +88,7 @@ def filter_by_value():
     global original_df, processed_df
     column = request.json.get('column')
     values = request.json.get('values')
-    if processed_df is None or column is None or values is None:
+    if processed_df is None or column is None or values is None or len(values) == 0:
         return jsonify({"error": "Invalid request parameters"}), 400
     if isinstance(values[0], (int, float)):
         min_val, max_val = values
@@ -118,28 +118,20 @@ def plot_scatter():
     color = request_data.get('color', None)
     facet_col = request_data.get('facet_col', None)
     facet_row = request_data.get('facet_row', None)
-    color_palette = request_data.get('colorPalette', None)
     
     if not x or not y:
         return jsonify({"error": "x and y axis must be specified"}), 400
     
     try:
-        plot_params = {
-            'x': x,
-            'y': y,
-            'data_frame': processed_df
-        }
+        plot_params = {'x': x, 'y': y, 'data_frame': processed_df}
         if color:
             plot_params['color'] = color
         if facet_col:
             plot_params['facet_col'] = facet_col
         if facet_row:
             plot_params['facet_row'] = facet_row
-        if color_palette and color_palette != 'Default':
-            plot_params['color_continuous_scale'] = color_palette
         
         fig = px.scatter(**plot_params)
-        fig.update_traces(marker=dict(size=request_data.get('size', 6), opacity=request_data.get('opacity', 0.8)))
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return jsonify(graph_json)
     except Exception as e:
