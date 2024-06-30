@@ -375,251 +375,386 @@ const toggleSelection = (value: any) => {
 <style scoped>
 /* コンテナのスタイル */
 .container {
-  padding: 20px;
+  padding: 20px; /* コンテナのパディング */
 }
 
 /* ヘッダーエリアのスタイル */
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin-bottom: 20px;
+  display: flex; /* ヘッダーのフレックスボックス設定 */
+  align-items: center; /* ヘッダーのアイテムを中央に揃える */
+  justify-content: flex-start; /* ヘッダーのアイテムを左揃えにする */
+  margin-bottom: 20px; /* ヘッダーの下部マージン */
 }
 
 /* ヘッダー左部分のスタイル */
 .header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: flex; /* ヘッダー左部分のフレックスボックス設定 */
+  align-items: center; /* ヘッダー左部分のアイテムを中央に揃える */
+  gap: 10px; /* ヘッダー左部分のアイテム間のギャップ */
 }
 
 /* コントロールエリアのスタイル */
 .controls {
-  display: flex;
-  gap: 10px;
+  display: flex; /* コントロールエリアのフレックスボックス設定 */
+  gap: 10px; /* コントロールエリアのアイテム間のギャップ */
 }
 
 /* ボタンのスタイル */
 button {
-  background-color: grey;
-  border: black;
-  color: black;
-  padding: 10px 20px;
-  text-align: center;
-  text-decoration: none;
-  font-size: 12px;
-  margin: 4px 2px;
-  cursor: pointer;
-  border-radius: 4px;
+  background-color: grey; /* ボタンの背景色 */
+  border: black; /* ボタンの境界線色 */
+  color: black; /* ボタンの文字色 */
+  padding: 2px 10px; /* ボタンのパディング */
+  text-align: center; /* ボタンのテキストを中央揃え */
+  text-decoration: none; /* ボタンのテキスト装飾をなしにする */
+  font-size: 14px; /* ボタンのフォントサイズ */
+  margin: 2px 2px; /* ボタンのマージン */
+  cursor: pointer; /* ボタンのカーソルをポインターにする */
+  border-radius: 4px; /* ボタンの角を丸くする */
 }
 
 /* ファイル入力のスタイル */
 input[type="file"] {
-  margin-right: 10px;
+  margin-right: 10px; /* ファイル入力の右マージン */
 }
 
 /* テーブル情報のスタイル */
 .table-info {
-  font-size: 14px;
-  text-align: left;
+  font-size: 14px; /* テーブル情報のフォントサイズ */
+  text-align: left; /* テーブル情報のテキストを左揃え */
 }
 
 /* テーブルコンテナのスタイル */
 .table-container {
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid #000;
-  margin-bottom: 30px;
+  max-height: 400px; /* テーブルコンテナの最大高さ */
+  overflow-y: auto; /* テーブルコンテナの縦方向のオーバーフローを自動にする */
+}
+
+/* ドロップダウンのスタイル */
+select {
+  padding: 5px; /* ドロップダウンのパディング */
+  margin: 5px; /* ドロップダウンのマージン */
+  border-radius: 4px; /* ドロップダウンの角を丸くする */
+}
+
+/* プロットボタンのスタイル */
+.plot-button {
+  background-color: #4CAF50; /* プロットボタンの背景色 */
+  color: white; /* プロットボタンの文字色 */
+  padding: 10px 24px; /* プロットボタンのパディング */
+  border: none; /* プロットボタンの境界線をなしにする */
+  border-radius: 4px; /* プロットボタンの角を丸くする */
+  cursor: pointer; /* プロットボタンのカーソルをポインターにする */
+}
+
+/* プロットコンテナのスタイル */
+.plot-container {
+  width: 100%; /* プロットコンテナの幅を100%にする */
+  height: 500px; /* プロットコンテナの高さを500pxにする */
+  /* border: 1px solid #ccc; プロットコンテナの境界線 */
+  margin-top: 20px; /* プロットコンテナの上部マージン */
+}
+/* ボタンのスタイル */
+button {
+  background-color: grey; /* ボタンの背景色 */
+  border: black; /* ボタンの境界線 */
+  color: black; /* ボタンの文字色 */
+  padding: 10px 20px; /* ボタンのパディング */
+  text-align: center; /* ボタンのテキストを中央揃え */
+  text-decoration: none; /* ボタンのテキスト装飾をなしにする */
+  font-size: 12px; /* ボタンのフォントサイズ */
+  margin: 4px 2px; /* ボタンのマージン */
+  cursor: pointer; /* ボタンのカーソルをポインターにする */
+  border-radius: 4px; /* ボタンの角を丸くする */
+}
+
+/* ファイル入力のスタイル */
+input[type="file"] {
+  margin-right: 10px; /* ファイル入力の右マージン */
+}
+
+/* テーブル情報のスタイル */
+.table-info {
+  font-size: 14px; /* テーブル情報のフォントサイズ */
+  text-align: left; /* テーブル情報のテキストを左揃え */
+}
+
+/* テーブルコンテナのスタイル */
+.table-container {
+  max-height: 400px; /* テーブルコンテナの最大高さ */
+  overflow-y: auto; /* テーブルコンテナの縦方向のオーバーフローを自動にする */
+}
+
+/* ドロップダウンのスタイル */
+select {
+  padding: 5px; /* ドロップダウンのパディング */
+  margin: 5px; /* ドロップダウンのマージン */
+  border-radius: 4px; /* ドロップダウンの角を丸くする */
+}
+
+/* プロットボタンのスタイル */
+.plot-button {
+  background-color: #4CAF50; /* プロットボタンの背景色 */
+  color: white; /* プロットボタンの文字色 */
+  padding: 10px 24px; /* プロットボタンのパディング */
+  border: none; /* プロットボタンの境界線をなしにする */
+  border-radius: 4px; /* プロットボタンの角を丸くする */
+  cursor: pointer; /* プロットボタンのカーソルをポインターにする */
+}
+
+/* プロットコンテナのスタイル */
+.plot-container {
+  width: 100%; /* プロットコンテナの幅を100%にする */
+  height: 500px; /* プロットコンテナの高さを500pxにする */
+  /* border: 1px solid #ccc; プロットコンテナの境界線 */
+  margin-top: 20px; /* プロットコンテナの上部マージン */
+}
+
+/* ヘッダーエリアのスタイル */
+.header {
+  display: flex; /* ヘッダーエリアのディスプレイをフレックスにする */
+  align-items: center; /* ヘッダーエリアのアイテムを中央揃え */
+  justify-content: flex-start; /* ヘッダーエリアのアイテムを左揃え */
+  margin-bottom: 20px; /* ヘッダーエリアの下部マージン */
+}
+
+/* ヘッダー左部分のスタイル */
+.header-left {
+  display: flex; /* ヘッダー左部分のディスプレイをフレックスにする */
+  align-items: center; /* ヘッダー左部分のアイテムを中央揃え */
+  gap: 10px; /* ヘッダー左部分のアイテム間のギャップ */
+}
+
+/* コントロールエリアのスタイル */
+.controls {
+  display: flex; /* コントロールエリアのディスプレイをフレックスにする */
+  gap: 10px; /* コントロールエリアのアイテム間のギャップ */
+}
+
+/* ボタンのスタイル */
+button {
+  background-color: grey; /* ボタンの背景色 */
+  border: black; /* ボタンの境界線 */
+  color: black; /* ボタンの文字色 */
+  padding: 5px 20px; /* ボタンのパディング */
+  text-align: center; /* ボタンのテキストを中央揃え */
+  text-decoration: none; /* ボタンのテキスト装飾をなしにする */
+  font-size: 15px; /* ボタンのフォントサイズ */
+  margin: 4px 2px; /* ボタンのマージン */
+  cursor: pointer; /* ボタンのカーソルをポインターにする */
+  border-radius: 4px; /* ボタンの角を丸くする */
+}
+
+/* ファイル入力のスタイル */
+input[type="file"] {
+  margin-right: 10px; /* ファイル入力の右マージン */
+}
+
+/* テーブル情報のスタイル */
+.table-info {
+  font-size: 14px; /* テーブル情報のフォントサイズ */
+  text-align: left; /* テーブル情報のテキストを左揃え */
+}
+
+/* テーブルコンテナのスタイル */
+.table-container {
+  max-height: 400px; /* テーブルコンテナの最大高さ */
+  overflow-y: auto; /* テーブルコンテナの縦方向のオーバーフローを自動にする */
 }
 
 table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: #ffffff;
+  width: 100%; /* テーブルの幅 */
+  border-collapse: collapse; /* テーブルの境界線を結合 */
+  background-color: #ffffff; /* テーブルの背景色 */
 }
 
 th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-  color: #333;
-  font-size: 12px;
+  border: 1px solid #ddd; /* テーブルヘッダーとデータセルの境界線 */
+  padding: 8px; /* テーブルヘッダーとデータセルのパディング */
+  text-align: left; /* テーブルヘッダーとデータセルのテキストを左揃え */
+  color: #333; /* テーブルヘッダーとデータセルの文字色 */
+  font-size: 12px; /* テーブルヘッダーとデータセルのフォントサイズ */
 }
 
 thead {
-  position: sticky;
-  top: 0;
-  background-color: #f2f2f2;
-  z-index: 1;
+  position: sticky; /* テーブルヘッダーの位置を固定 */
+  top: 0; /* テーブルヘッダーの上部位置 */
+  background-color: #f2f2f2; /* テーブルヘッダーの背景色 */
+  z-index: 1; /* テーブルヘッダーの重なり順序 */
 }
 
 tr:nth-child(even) {
-  background-color: #f9f9f9;
+  background-color: #f9f9f9; /* 偶数行の背景色 */
 }
 
 .header-cell {
-  white-space: pre-wrap;
-  word-wrap: break-word;
+  white-space: pre-wrap; /* ヘッダーセルの空白を保持 */
+  word-wrap: break-word; /* ヘッダーセルの単語を折り返し */
 }
 
 /* プロット設定のスタイル */
 .plot-settings {
-  margin-bottom: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px;
-  border: 1px solid #ddd;
+  margin-bottom: 20px; /* プロット設定の下部マージン */
+  display: flex; /* プロット設定のディスプレイをフレックスにする */
+  flex-wrap: wrap; /* プロット設定のアイテムを折り返し */
+  gap: 10px; /* プロット設定のアイテム間のギャップ */
+  padding: 10px; /* プロット設定のパディング */
+  border: 1px solid #ddd; /* プロット設定の境界線 */
 }
 .plot-settings label {
-  display: flex;
-  flex-direction: column;
+  display: flex; /* プロット設定のラベルのディスプレイをフレックスにする */
+  flex-direction: column; /* プロット設定のラベルの方向を縦にする */
 }
 .plot-settings select {
-  margin-top: 5px;
-  padding: 5px;
-  font-size: 14px;
-  border: 1px solid #ddd; 
-  background-color: white; 
-  color: #4d4d4d;
+  margin-top: 5px; /* プロット設定のセレクトの上部マージン */
+  padding: 5px; /* プロット設定のセレクトのパディング */
+  font-size: 14px; /* プロット設定のセレクトのフォントサイズ */
+  border: 1px solid #ddd; /* プロット設定のセレクトの境界線 */
+  background-color: white; /* プロット設定のセレクトの背景色 */
+  color: #4d4d4d; /* プロット設定のセレクトの文字色 */
 }
 
 .plot-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
+  display: flex; /* プロットコントロールのディスプレイをフレックスにする */
+  flex-direction: column; /* プロットコントロールの方向を縦にする */
+  gap: 10px; /* プロットコントロールのアイテム間のギャップ */
+  margin-bottom: 20px; /* プロットコントロールの下部マージン */
 }
 
 .plot-settings-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
+  display: flex; /* プロット設定行のディスプレイをフレックスにする */
+  flex-wrap: wrap; /* プロット設定行のアイテムを折り返し */
+  gap: 10px; /* プロット設定行のアイテム間のギャップ */
+  align-items: center; /* プロット設定行のアイテムを中央揃え */
 }
 
 .plot-settings-row label {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  display: flex; /* プロット設定行のラベルのディスプレイをフレックスにする */
+  flex-direction: column; /* プロット設定行のラベルの方向を縦にする */
+  align-items: flex-start; /* プロット設定行のラベルのアイテムを左揃え */
 }
 
 .plot-settings-row input[type="range"] {
-  margin-top: 5px;
+  margin-top: 5px; /* プロット設定行のレンジ入力の上部マージン */
 }
 
 .reset-button {
-  margin-left: auto;
+  margin-left: auto; /* リセットボタンの左マージンを自動にする */
 }
 
 .plot-button {
-  background-color: #007bff;
-  color: white;
-  font-size: 16px;
-  padding: 10px 20px;
-  margin: 0 auto;
-  display: block;
+  background-color: #007bff; /* プロットボタンの背景色 */
+  color: white; /* プロットボタンの文字色 */
+  font-size: 16px; /* プロットボタンのフォントサイズ */
+  padding: 10px 20px; /* プロットボタンのパディング */
+  margin: 0 auto; /* プロットボタンのマージン */
+  display: block; /* プロットボタンのディスプレイをブロックにする */
 }
 
 .split-view {
-  display: flex;
-  height: calc(100vh - 100px);
+  display: flex; /* スプリットビューのディスプレイをフレックスにする */
+  height: calc(100vh - 100px); /* スプリットビューの高さを計算 */
 }
 
 .resizable-divider {
-  width: 5px;
-  cursor: ew-resize;
-  background-color: #ccc;
-  position: relative;
+  width: 5px; /* リサイズ可能なディバイダーの幅 */
+  cursor: ew-resize; /* リサイズ可能なディバイダーのカーソル */
+  background-color: #ccc; /* リサイズ可能なディバイダーの背景色 */
+  position: relative; /* リサイズ可能なディバイダーの位置 */
 }
 
 .resizable-divider:after {
-  content: '';
-  display: block;
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  left: 0;
-  top: 0;
+  content: ''; /* リサイズ可能なディバイダーの後のコンテンツ */
+  display: block; /* リサイズ可能なディバイダーの後のディスプレイ */
+  height: 100%; /* リサイズ可能なディバイダーの後の高さ */
+  width: 100%; /* リサイズ可能なディバイダーの後の幅 */
+  position: absolute; /* リサイズ可能なディバイダーの後の位置 */
+  left: 0; /* リサイズ可能なディバイダーの後の左位置 */
+  top: 0; /* リサイズ可能なディバイダーの後の上位置 */
 }
 
 .left-view, .right-view {
-  overflow: auto;
-  padding: 10px;
-  box-sizing: border-box;
+  overflow: auto; /* 左ビューと右ビューのオーバーフローを自動にする */
+  padding: 10px; /* 左ビューと右ビューのパディング */
+  box-sizing: border-box; /* 左ビューと右ビューのボックスサイズをボーダーボックスにする */
 }
 
 .left-view {
-  flex: 4;
-  border-right: 1px solid #ddd;
+  flex: 4; /* 左ビューのフレックス */
+  border-right: 1px solid #ddd; /* 左ビューの右境界線 */
 }
 
 .right-view {
-  flex: 6;
-  display: flex;
-  flex-direction: column;
+  flex: 6; /* 右ビューのフレックス */
+  display: flex; /* 右ビューのディスプレイをフレックスにする */
+  flex-direction: column; /* 右ビューの方向を縦にする */
 }
 
 .plot-container {
-  flex: 1;
-  margin-top: 20px;
+  flex: 1; /* プロットコンテナのフレックス */
+  margin-top: 20px; /* プロットコンテナの上部マージン */
 }
 
 .sticky-column {
-  position: sticky;
-  left: 0;
-  background-color: #f2f2f2;
-  z-index: 2;
+  position: sticky; /* スティッキーカラムの位置を固定 */
+  left: 0; /* スティッキーカラムの左位置 */
+  /* background-color: #f2f2f2; スティッキーカラムの背景色 */
+  z-index: 2; /* スティッキーカラムの重なり順序 */
 }
 
 /* 前処理コントロールのスタイル */
 .preprocessing-controls {
-  margin-bottom: 20px;
+  margin-bottom: 20px; /* 前処理コントロールの下部マージン */
 }
 
 .preprocessing-controls h3 {
-  margin-bottom: 10px;
+  margin-bottom: 10px; /* 前処理コントロールの見出しの下部マージン */
 }
 
 .preprocessing-controls div {
-  margin-bottom: 10px;
+  margin-bottom: 10px; /* 前処理コントロールのディブの下部マージン */
 }
 
 .filter-by-value {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  width: 100%;
-  max-width: 600px;
-  height: 150px; /* 固定サイズに設定 */
-  border: 1px solid #ddd;
-  padding: 10px;
+  display: flex; /* 値でフィルターのディスプレイをフレックスにする */
+  gap: 10px; /* 値でフィルターのアイテム間のギャップ */
+  align-items: center; /* 値でフィルターのアイテムを中央揃え */
+  width: 100%; /* 値でフィルターの幅 */
+  max-width: 600px; /* 値でフィルターの最大幅 */
+  height: 150px; /* 値でフィルターの高さ */
+  border-top: 1px solid #ddd; /* 値でフィルターの上境界線 */
+  border-bottom: 1px solid #ddd; /* 値でフィルターの下境界線 */
+  padding: 10px; /* 値でフィルターのパディング */
 }
 
 .filter-left {
-  flex: 1;
+  flex: 1; /* フィルター左のフレックス */
 }
 
 .filter-right {
-  flex: 1;
-  overflow-y: auto;
-  height: 100%;
+  flex: 1; /* フィルター右のフレックス */
+  overflow-y: auto; /* フィルター右の縦方向のオーバーフローを自動にする */
+  height: 100%; /* フィルター右の高さ */
 }
 
 .multiselect-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
+  display: flex; /* マルチセレクトコンテナのディスプレイをフレックスにする */
+  flex-wrap: wrap; /* マルチセレクトコンテナのアイテムを折り返し */
+  gap: 5px; /* マルチセレクトコンテナのアイテム間のギャップ */
 }
 
 .multiselect-container div {
-  padding: 5px;
-  border: 1px solid #ddd;
-  background-color: white;
-  cursor: pointer;
+  padding: 5px; /* マルチセレクトコンテナのディブのパディング */
+  border: 1px solid #ddd; /* マルチセレクトコンテナのディブの境界線 */
+  background-color: white; /* マルチセレクトコンテナのディブの背景色 */
+  cursor: pointer; /* マルチセレクトコンテナのディブのカーソル */
+  width: 100px; /* マルチセレクトコンテナのディブの幅を固定 */
+  white-space: nowrap; /* マルチセレクトコンテナのディブの空白を折り返さない */
+  overflow: hidden; /* マルチセレクトコンテナのディブのオーバーフローを隠す */
+  text-overflow: ellipsis; /* マルチセレクトコンテナのディブのテキストを省略記号で切る */
 }
 
 .multiselect-container div.selected {
-  background-color: lightblue;
+  background-color: lightblue; /* マルチセレクトコンテナの選択されたディブの背景色 */
 }
 </style>
